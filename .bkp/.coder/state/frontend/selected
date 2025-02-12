@@ -1,0 +1,4 @@
+frontend/src/components/Sidebar.tsx
+frontend/src/api/endpoints.ts
+frontend/src/types.ts
+frontend/src/App.tsx

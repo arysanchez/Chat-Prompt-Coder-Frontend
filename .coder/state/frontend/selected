@@ -1,0 +1,4 @@
+frontend/src/App.tsx
+frontend/src/api/endpoints.ts
+frontend/src/components/ChatArea.tsx
+frontend/src/types.ts
