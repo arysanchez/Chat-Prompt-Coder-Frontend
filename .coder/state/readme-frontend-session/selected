@@ -1,0 +1,5 @@
+frontend/src/api/endpoints.ts
+frontend/package.json
+frontend/src/main.tsx
+frontend/src/App.tsx
+frontend/vite.config.ts

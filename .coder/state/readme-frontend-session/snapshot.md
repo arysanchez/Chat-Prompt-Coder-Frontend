@@ -53,10 +53,9 @@ Use stock photos from unsplash where appropriate, only valid URLs you know exist
 
 ### frontend/src/api/endpoints.ts
 ```
-import type { Conversation, Prompt, ApiResponse } from '../types';
+import type { Conversation, Prompt, ApiResponse, Message } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
 
 export async function fetchPrompts(): Promise<ApiResponse<Prompt[]>> {
   const response = await fetch(`${API_BASE_URL}/list-prompt`, {
@@ -72,7 +71,6 @@ export async function fetchPrompts(): Promise<ApiResponse<Prompt[]>> {
     error: response.ok ? undefined : data.detail,
   };
 }
-
 
 export async function saveSelectedPrompts(prompts: Prompt[]): Promise<ApiResponse<Prompt>> {
   const response = await fetch(`${API_BASE_URL}/create-prompt`, {
@@ -103,6 +101,22 @@ export const createNewChat = async (): Promise<{ success: boolean; data: Convers
   };
   return { success: true, data: newChat };
 };
+
+export async function sendMessage(prompt: string): Promise<ApiResponse<Message>> {
+  const response = await fetch(`${API_BASE_URL}/send-message?prompt=${encodeURIComponent(prompt)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+}
 ```
 
 ### frontend/src/components/ChatArea.tsx
@@ -110,6 +124,7 @@ export const createNewChat = async (): Promise<{ success: boolean; data: Convers
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Paperclip, Image as ImageIcon, Smile } from 'lucide-react';
 import type { Conversation, Message, Prompt } from '../types';
+import { sendMessage } from '../api/endpoints';
 
 interface ChatAreaProps {
   conversation: Conversation;
@@ -120,6 +135,7 @@ interface ChatAreaProps {
 
 export function ChatArea({ conversation, onSendMessage, isWaitingResponse, selectedPrompt }: ChatAreaProps) {
   const [currentMessage, setCurrentMessage] = useState('');
+  const [waitingResponse, setWaitingResponse] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -136,10 +152,16 @@ export function ChatArea({ conversation, onSendMessage, isWaitingResponse, selec
     }
   }, [selectedPrompt]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentMessage.trim() && !isWaitingResponse) {
+    if (currentMessage.trim() && !waitingResponse) {
       onSendMessage(currentMessage);
+      setWaitingResponse(true);
+      const response = await sendMessage(currentMessage);
+      setWaitingResponse(false);
+      if (response.success && response.data) {
+        onSendMessage(response.data.content);
+      }
       setCurrentMessage('');
     }
   };
@@ -209,8 +231,8 @@ export function ChatArea({ conversation, onSendMessage, isWaitingResponse, selec
             <textarea
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
-              placeholder={isWaitingResponse ? 'Waiting for response...' : 'Type your message...'}
-              disabled={isWaitingResponse}
+              placeholder={waitingResponse ? 'Waiting for response...' : 'Type your message...'}
+              disabled={waitingResponse}
               className="w-full rounded-lg pl-4 pr-32 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               rows={3}
               onKeyDown={(e) => {
@@ -224,27 +246,27 @@ export function ChatArea({ conversation, onSendMessage, isWaitingResponse, selec
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                disabled={isWaitingResponse}
+                disabled={waitingResponse}
               >
                 <Paperclip className="w-5 h-5" />
               </button>
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                disabled={isWaitingResponse}
+                disabled={waitingResponse}
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                disabled={isWaitingResponse}
+                disabled={waitingResponse}
               >
                 <Smile className="w-5 h-5" />
               </button>
               <button
                 type="submit"
-                disabled={!currentMessage.trim() || isWaitingResponse}
+                disabled={!currentMessage.trim() || waitingResponse}
                 className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-5 h-5" />
@@ -608,6 +630,7 @@ import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import type { Conversation, Message, Prompt } from './types';
+import { sendMessage } from './api/endpoints';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -692,26 +715,28 @@ function App() {
 
     try {
       setIsWaitingResponse(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await sendMessage(content);
       
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'This is a simulated response. Here you will implement your AI API integration.',
-        sender: 'ai',
-        timestamp: new Date().toISOString()
-      };
+      if (response.success && response.data) {
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          content: response.data.prompt,
+          sender: 'ai',
+          timestamp: new Date().toISOString()
+        };
 
-      setConversations(prevConversations =>
-        prevConversations.map(conv =>
-          conv.id === currentConversationId
-            ? {
-                ...conv,
-                lastMessage: aiResponse.content,
-                messages: [...conv.messages, aiResponse]
-              }
-            : conv
-        )
-      );
+        setConversations(prevConversations =>
+          prevConversations.map(conv =>
+            conv.id === currentConversationId
+              ? {
+                  ...conv,
+                  lastMessage: aiResponse.content,
+                  messages: [...conv.messages, aiResponse]
+                }
+              : conv
+          )
+        );
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {

@@ -132,7 +132,7 @@ export function ChatArea({ conversation, onSendMessage, isWaitingResponse, selec
 
   useEffect(() => {
     if (selectedPrompt) {
-      setCurrentMessage(selectedPrompt.title);
+      setCurrentMessage(selectedPrompt.prompt);
     }
   }, [selectedPrompt]);
 
@@ -633,20 +633,6 @@ function App() {
         }
       ]
     },
-    {
-      id: '2',
-      title: 'API Design Discussion',
-      lastMessage: 'What are the best practices for REST API design?',
-      isFavorite: false,
-      messages: []
-    },
-    {
-      id: '3',
-      title: 'Database Schema Review',
-      lastMessage: 'Can you review my database schema?',
-      isFavorite: true,
-      messages: []
-    }
   ]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('1');
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
