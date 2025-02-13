@@ -1,3 +1,7 @@
+Let's add more detailed logging and ensure that the `content` is properly defined. Additionally, let's make sure that the `sendMessage` function is returning the expected data structure.
+
+### frontend/src/App.tsx [coder:save]
+```typescript
 import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
@@ -91,7 +95,7 @@ function App() {
           ? {
               ...conv,
               lastMessage: content,
-              messages: conv.messages ? [...conv.messages, newMessage] : [newMessage]
+              messages: [...conv.messages, newMessage]
             }
           : conv
       )
@@ -109,7 +113,7 @@ function App() {
       if (response.success && response.data) {
         const aiResponse: Message = {
           id: (Date.now() + 1).toString(),
-          content: response.data.prompt, // Adjusted to match the response structure
+          content: response.data.content,
           sender: 'ai',
           timestamp: new Date().toISOString()
         };
@@ -120,7 +124,7 @@ function App() {
               ? {
                   ...conv,
                   lastMessage: aiResponse.content,
-                  messages: conv.messages ? [...conv.messages, aiResponse] : [aiResponse]
+                  messages: [...conv.messages, aiResponse]
                 }
               : conv
           )
@@ -165,3 +169,81 @@ function App() {
 }
 
 export default App;
+```
+[coder:end]
+
+### frontend/src/api/endpoints.ts [coder:save]
+```typescript
+import type { Conversation, Prompt, ApiResponse, Message } from '../types';
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
+export async function fetchPrompts(): Promise<ApiResponse<Prompt[]>> {
+  const response = await fetch(`${API_BASE_URL}/list-prompt`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const data = await response.json();
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+}
+
+export async function saveSelectedPrompts(prompts: Prompt[]): Promise<ApiResponse<Prompt>> {
+  const response = await fetch(`${API_BASE_URL}/create-prompt`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(prompts),
+  });
+
+  const data = await response.json();
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+}
+
+export const createNewChat = async (): Promise<{ success: boolean; data: Conversation; error?: string }> => {
+  const response = await fetch(`${API_BASE_URL}/new-conversation`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+};
+
+export async function sendMessage(prompt: string, chatId: string): Promise<ApiResponse<Message>> {
+  const response = await fetch(`${API_BASE_URL}/send-message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ prompt, chatId }),
+  });
+
+  const data = await response.json();
+  console.log('sendMessage response data:', data);
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+}
+```
+[coder:end]
+
+This update includes additional logging in the `sendMessage` function to print the response data. This should help us identify if the response from the API is as expected. Please check the console output for these logs and provide any additional information if the issue persists.

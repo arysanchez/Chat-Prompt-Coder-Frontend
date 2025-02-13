@@ -1,3 +1,7 @@
+Let's ensure that the response data is correctly mapped to the `Message` type and properly set in the state. It seems like the response data might not be in the expected format. We'll adjust the code to handle this correctly.
+
+### frontend/src/App.tsx [coder:save]
+```typescript
 import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
@@ -165,3 +169,7 @@ function App() {
 }
 
 export default App;
+```
+[coder:end]
+
+This update ensures that the response data is correctly mapped to the `Message` type and properly set in the state. The key change is to use `response.data.prompt` to match the structure of the response. Please try this update and let me know if the issue persists.

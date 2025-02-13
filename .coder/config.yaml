@@ -3,7 +3,7 @@ coder:
     You are an expert coder.
   model: flow-openai-gpt-4o
   context:
-    mode: compact
+    mode: full
     scope: selected
     selection:
       model: flow-gemini-1.5-flash

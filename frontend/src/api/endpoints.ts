@@ -35,20 +35,7 @@ export async function saveSelectedPrompts(prompts: Prompt[]): Promise<ApiRespons
 }
 
 export const createNewChat = async (): Promise<{ success: boolean; data: Conversation; error?: string }> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const newChat: Conversation = {
-    id: Math.random().toString(36).substring(7),
-    title: 'New Conversation',
-    lastMessage: 'How can I help you today?',
-    isFavorite: false,
-    messages: []
-  };
-  return { success: true, data: newChat };
-};
-
-export async function sendMessage(prompt: string): Promise<ApiResponse<Message>> {
-  const response = await fetch(`${API_BASE_URL}/send-message?prompt=${encodeURIComponent(prompt)}`, {
+  const response = await fetch(`${API_BASE_URL}/new-conversation`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -56,6 +43,24 @@ export async function sendMessage(prompt: string): Promise<ApiResponse<Message>>
   });
 
   const data = await response.json();
+  return {
+    success: response.ok,
+    data: response.ok ? data : undefined,
+    error: response.ok ? undefined : data.detail,
+  };
+};
+
+export async function sendMessage(prompt: string, chatId: string): Promise<ApiResponse<Message>> {
+  const response = await fetch(`${API_BASE_URL}/send-message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ prompt, chatId }),
+  });
+
+  const data = await response.json();
+  console.log('sendMessage response data:', data);
   return {
     success: response.ok,
     data: response.ok ? data : undefined,

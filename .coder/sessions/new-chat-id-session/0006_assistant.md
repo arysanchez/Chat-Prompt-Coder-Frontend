@@ -1,3 +1,7 @@
+The error indicates that `conv.messages` is undefined. This suggests that the `messages` array might not be properly initialized for some conversations. Let's ensure that all conversations have a properly initialized `messages` array.
+
+### frontend/src/App.tsx [coder:save]
+```typescript
 import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
@@ -109,7 +113,7 @@ function App() {
       if (response.success && response.data) {
         const aiResponse: Message = {
           id: (Date.now() + 1).toString(),
-          content: response.data.prompt, // Adjusted to match the response structure
+          content: response.data.content,
           sender: 'ai',
           timestamp: new Date().toISOString()
         };
@@ -165,3 +169,7 @@ function App() {
 }
 
 export default App;
+```
+[coder:end]
+
+This update ensures that the `messages` array is properly initialized for all conversations. Please try this update and let me know if the issue persists.

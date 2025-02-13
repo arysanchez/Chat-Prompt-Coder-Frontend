@@ -1,0 +1,9 @@
+frontend/src/components/Sidebar.tsx
+frontend/src/api/endpoints.ts
+frontend/src/App.tsx
+frontend/src/components/ChatArea.tsx
+frontend/src/types.ts
+frontend/src/main.tsx
+frontend/src/index.css
+frontend/index.html
+frontend/vite.config.ts
